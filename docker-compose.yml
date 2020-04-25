@@ -1,0 +1,17 @@
+version: '3.7'
+services:
+  lambda:
+    container_name: lambda
+    image: sam2kb/lambda
+    build:
+      context: ./
+    environment:
+      GIT_REPO:
+      PIP_PACKAGES: cryptography
+      REM_LAMBDA_FILE: lambda_function.py
+    volumes:
+      - './src:/src'
+      - './run.sh:/opt/run.sh'
+      - './deploy:/deploy'
+    command: |
+      bash -c /opt/run.sh

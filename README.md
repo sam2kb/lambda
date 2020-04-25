@@ -1,50 +1,56 @@
-# Build AWS Lambda deployment packages with Docker
+# Build Python AWS Lambda deployment packages with Docker
 
-## Blog post (includes tips on reducing package size)
-
-[An easier way to build AWS Lambda deployment packages — with Docker instead of EC2](https://blog.quiltdata.com/an-easier-way-to-build-lambda-deployment-packages-with-docker-instead-of-ec2-9050cd486ba8)
+We are building for Python 3.8 and on the latest `amazonlinux 2`. You can either use `lambda.zip` directly or add `lambda-layer.zip` as a layer to your `lambda_function.py`. Python binary is in `/opt/bin/python3.8`.
 
 ## Why?
 
-* Logging in to EC2 and 
-[creating a deployment package by hand](https://docs.aws.amazon.com/lambda/latest/dg/lambda-python-how-to-create-deployment-package.html) 
-is clumsy
-* Instead, script package creation around the [`amazonlinux` image](https://hub.docker.com/_/amazonlinux/)
-(blessed as an _official repository_ and
-linked from [this AWS user guide](https://docs.aws.amazon.com/AmazonECR/latest/userguide/amazon_linux_container_image.html))
+* Logging in to EC2 and [creating a deployment package by hand](https://docs.aws.amazon.com/lambda/latest/dg/python-package.html) is clumsy. Instead, script package creation around the [`amazonlinux 2` image](https://hub.docker.com/_/amazonlinux/).
 
-## [Tags](https://hub.docker.com/r/quiltdata/lambda/tags)
-* `build` - introduced to build wheels per [#2](https://github.com/quiltdata/lambda/pull/2). In theory this should not affect how the environment functions, but in practice use image id `823205fae3ed` if you want to be as close to the official lambda environment as possible.
+## How to use
 
-## Example: Python 3.6 deployment package
+* Mount `/src` as a docker volume, this is where you should put your lambda code.
+* Deployment packages `lambda.zip` and `lambda-layer.zip` are written to `/deploy` directory.
+* Modify and mount `run.sh` script to `/opt/run.sh`.
+* Pass environment variables:
+    * `GIT_REPO` - clone this git repo into `/src`.
+    * `PIP_PACKAGES` - space separated list of packages you want to add to your lambda zip.
+    * `REM_LAMBDA_FILE` - (OPTIONAL) remove the original `lambda_function.py` file from `lambda-layer.zip` if you don't need it there.
 
 ```sh
-docker pull quiltdata/lambda
+$ docker pull sam2kb/lambda
 
-docker run --rm -v $(pwd)/create_table:/io -t \
-	-e GIT_REPO quiltdata/lambda \
-	bash /io/package.sh
+$ docker run --rm \
+  -v $(pwd)/src:/src \
+  -v $(pwd)/run.sh:/opt/run.sh \
+  -v $(pwd)/deploy:/deploy \
+  sam2kb/lambda \
+  -e GIT_REPO="https://github.com/sam2kb/lambda" \
+  -e PIP_PACKAGES="cryptography cffi" \
+  -e REM_LAMBDA_FILE="lambda_function.py" \
+  bash /src/run.sh
 ```
 
-* Mount `/io` as a docker volume
-	* `/io` should contain `package.sh` and your lambda code \
-	* `/io` is where the deployment package, lambda.zip, is written \
-* Pass environment variables with `-e`
-* `--rm` so that, for example, secure envs aren't written to disk
+## Or run with docker-compose
+Remember to modify `docker-compose.yml` file first
 
+```sh
+$ docker-compose run --rm
+
+```
 
 ## Customize
-Modify `package.sh` to suit your own purposes.
+Modify `run.sh` to suit your own purposes
 
-## Build container
+## Use another Python version
+
+Pass a build ARG with any other Python version as such `PYTHON_VER=3.8.0`
 
 ```sh
-docker build -t quiltdata/lambda .
+$ docker build --build-arg PYTHON_VER=3.8.0 -t mylambda .
 ```
 
-## Clone private GitHub repo in container
-Use a [personal access token](https://github.com/settings/tokens):
+Or with `docker-compose`
 
 ```sh
-git clone https://${TOKEN}@github.com/USER/REPO
+$ docker-compose build --build-arg PYTHON_VER=3.8.0
 ```
