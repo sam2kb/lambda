@@ -20,14 +20,14 @@ We are building for Python 3.8 and on the latest `amazonlinux 2`. You can either
 $ docker pull sam2kb/lambda
 
 $ docker run --rm \
-  -v $(pwd)/src:/src \
-  -v $(pwd)/run.sh:/opt/run.sh \
-  -v $(pwd)/deploy:/deploy \
-  sam2kb/lambda \
-  -e GIT_REPO="https://github.com/sam2kb/lambda" \
-  -e PIP_PACKAGES="cryptography cffi" \
+  -v "$(pwd)/src:/src" \
+  -v "$(pwd)/run.sh:/opt/run.sh" \
+  -v "$(pwd)/deploy:/deploy" \
+  -e GIT_REPO="https://github.com/some/repo" \
+  -e PIP_PACKAGES="cryptography imap_tools " \
   -e REM_LAMBDA_FILE="lambda_function.py" \
-  bash /src/run.sh
+  sam2kb/lambda \
+  bash /opt/run.sh
 ```
 
 ## Or run with docker-compose
