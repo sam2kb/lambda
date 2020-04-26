@@ -34,7 +34,7 @@ $ docker run --rm \
 Remember to modify `docker-compose.yml` file first
 
 ```sh
-$ docker-compose run --rm
+$ docker-compose run --rm lambda
 
 ```
 
